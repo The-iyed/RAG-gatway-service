@@ -1,0 +1,6 @@
+topics:
+  password_reset:
+    route: ${AGENT_PASSWORD_RESET_URL}/query
+  billing:
+    route: ${AGENT_BILLING_URL}/query
+default_agent: ${AGENT_FALLBACK_URL}/query 
