@@ -1,16 +1,15 @@
 # RAG Gateway Service
 
-A modular RAG (Retrieval-Augmented Generation) gateway system that routes queries to topic-specific agents.
+A FastAPI-based gateway service that automatically routes queries to topic-specific RAG agents using AI-powered topic detection.
 
 ## Features
 
-- Topic-based routing to specialized RAG agents
-- YAML-based configuration
-- Async HTTP client for agent communication
-- Docker support for easy deployment
-- Mock agent services for testing
-- OpenAPI documentation
-- Convenient scripts for running tests and starting the service
+- Automatic topic detection using OpenAI embeddings
+- Configurable routing to topic-specific agents
+- Fallback agent for unknown topics
+- Environment variable configuration
+- Docker support
+- Comprehensive test coverage
 
 ## Project Structure
 
@@ -55,84 +54,121 @@ rag-gateway/
 
 ## API Usage
 
-### Query Endpoint
-
 Send a POST request to `/api/v1/query` with the following JSON payload:
 
 ```json
 {
-  "topic": "password_reset",
   "message": "How do I reset my password?"
 }
 ```
 
-The gateway will route the query to the appropriate agent based on the topic and return the response.
+The service will:
+1. Detect the topic using AI embeddings
+2. Route the query to the appropriate agent
+3. Return a response with the detected topic and confidence score
+
+Example response:
+```json
+{
+  "response": "To reset your password, click the 'Forgot Password' link.",
+  "detected_topic": "password_reset",
+  "metadata": {
+    "confidence": 0.95,
+    "agent_metadata": {
+      "source": "password_reset_guide"
+    }
+  }
+}
+```
 
 ## Configuration
 
-The routing configuration is defined in `config.yaml`:
+The service uses a YAML configuration file (`config.yaml`) to define topics and their corresponding agent URLs. Each topic includes:
+- Route: The URL of the agent service
+- Descriptions: Example queries and descriptions for topic detection
 
+Example configuration:
 ```yaml
 topics:
   password_reset:
-    route: http://agent-password-reset:8001/query
+    route: ${AGENT_PASSWORD_RESET_URL}/query
+    descriptions:
+      - "How to reset password"
+      - "Forgot password"
+      - "Change password"
   billing:
-    route: http://agent-billing:8002/query
-default_agent: http://agent-fallback:8003/query
+    route: ${AGENT_BILLING_URL}/query
+    descriptions:
+      - "Billing questions"
+      - "Payment issues"
+      - "Invoice problems"
+
+default_agent: ${AGENT_FALLBACK_URL}/query
 ```
+
+## Environment Variables
+
+Required environment variables:
+- `OPENAI_API_KEY`: Your OpenAI API key
+- `AGENT_PASSWORD_RESET_URL`: URL for password reset agent
+- `AGENT_BILLING_URL`: URL for billing agent
+- `AGENT_FALLBACK_URL`: URL for fallback agent
+
+Optional environment variables:
+- `ENVIRONMENT`: Deployment environment (default: "development")
+- `REQUEST_TIMEOUT`: Request timeout in seconds (default: 30.0)
+- `CORS_ORIGINS`: Allowed CORS origins (default: ["*"])
+- `CORS_METHODS`: Allowed CORS methods (default: ["*"])
+- `CORS_HEADERS`: Allowed CORS headers (default: ["*"])
 
 ## Development
 
 1. Create a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
-2. Install development dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-3. Run the development server:
-   ```bash
-   uvicorn app.main:app --reload
-   ```
+3. Run tests:
+```bash
+pytest tests/ -v
+```
+
+4. Start the service:
+```bash
+uvicorn app.main:app --reload
+```
+
+## Docker Deployment
+
+1. Build the image:
+```bash
+docker build -t rag-gateway .
+```
+
+2. Run the container:
+```bash
+docker run -p 8000:8000 --env-file .env rag-gateway
+```
 
 ## Testing
 
-Run the test suite with coverage:
+The service includes comprehensive tests for:
+- Health check endpoint
+- Configuration loading
+- Topic detection
+- Query routing
+- Error handling
 
+Run tests with:
 ```bash
-./scripts/test.sh
+pytest tests/ -v
 ```
-
-This will:
-- Create a virtual environment if it doesn't exist
-- Install dependencies if needed
-- Run the test suite with coverage reporting
-- Show which lines of code are not covered by tests
-
-## Docker Support
-
-Build and run the gateway:
-
-```bash
-docker build -t rag-gateway .
-docker run -p 8000:8000 rag-gateway
-```
-
-Or use the provided script to run the complete system:
-
-```bash
-./scripts/start.sh
-```
-
-This will:
-- Check if Docker is running
-- Build and start all services
-- Verify that services are running correctly
-- Display helpful information about accessing the service
 
 ## API Documentation
 

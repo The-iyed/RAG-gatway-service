@@ -1,10 +1,12 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional, Dict, Any
 
 class QueryRequest(BaseModel):
-    topic: str = Field(..., description="The topic of the query")
-    message: str = Field(..., description="The message to be processed")
+    """Request model for query endpoint."""
+    message: str
 
 class QueryResponse(BaseModel):
-    response: str = Field(..., description="The response from the agent")
-    metadata: Optional[Dict[str, Any]] = Field(default=None, description="Additional metadata from the agent") 
+    """Response model for query endpoint."""
+    response: str
+    detected_topic: str
+    metadata: Optional[Dict[str, Any]] = None 
